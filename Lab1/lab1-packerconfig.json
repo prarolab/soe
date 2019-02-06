@@ -1,0 +1,79 @@
+{
+    "variables":{
+        "azure_subscription_id": "",
+        "azure_client_id": "",
+        "azure_client_secret": "",
+        "azure_tenant_id": "",
+        "alias":""
+    },
+    "builders": [
+        {
+            "type": "azure-arm",
+            "subscription_id": "{{user `azure_subscription_id`}}",
+            "client_id": "{{user `azure_client_id`}}",
+            "client_secret": "{{user `azure_client_secret`}}",
+            "tenant_id": "{{user `azure_tenant_id`}}",
+            "location": "East US",
+            "os_type": "Windows",
+            "image_publisher": "MicrosoftWindowsServer",
+            "image_offer": "WindowsServer",
+            "image_sku": "2016-Datacenter",
+            "image_version": "latest",
+            "communicator": "winrm",
+            "winrm_use_ssl": true,
+            "winrm_insecure": true,
+            "winrm_timeout": "3m",
+            "winrm_username": "packer-admin",
+            "virtual_network_name":"{{user `alias`}}-vnet1",
+            "virtual_network_subnet_name":"Management",
+            "virtual_network_resource_group_name":"{{user `alias`}}-network-rg",
+            "managed_image_resource_group_name": "{{user `alias`}}-vmimages-rg",
+            "managed_image_name": "{{user `alias`}}-win2016-image01"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "powershell",
+            "inline": [
+                "WINRM QuickConfig -q",
+                "md C:\\soe"
+            ]
+        },
+        {
+            "type": "powershell",
+            "inline": [
+                "cd c:\\soe",
+                "wget https://msreadylabs.blob.core.windows.net/workshop/soelab1.zip -outfile c:\\soe\\soelab1.zip",
+                "wget https://msreadylabs.blob.core.windows.net/workshop/unzip.ps1 -outfile c:\\soe\\unzip.ps1",
+                "dir c:\\soe"
+            ]
+        },
+        {
+            "type": "windows-restart",
+            "restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\""
+        },
+        {
+            "type": "powershell",
+            "inline": [
+		"c:\\soe\\unzip.ps1",
+                "C:\\soe\\soelab1\\lgpo.exe /s C:\\soe\\soelab1\\secpol.inf",
+                "C:\\soe\\soelab1\\lgpo.exe /ac C:\\soe\\soelab1\\audit.csv",
+                "C:\\soe\\soelab1\\lgpo.exe /u C:\\soe\\soelab1\\user-reg.pol",
+                "C:\\soe\\soelab1\\lgpo.exe /m C:\\soe\\soelab1\\machine-reg.pol",
+                "cd c:\\soe",
+                "rmdir c:\\soe",
+                "if( Test-Path $Env:SystemRoot\\windows\\system32\\Sysprep\\unattend.xml ){ rm $Env:SystemRoot\\windows\\system32\\Sysprep\\unattend.xml -Force}",
+                "& $env:SystemRoot\\System32\\Sysprep\\Sysprep.exe /oobe /generalize /quiet /quit",
+                "while($true) { $imageState = Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Setup\\State | Select ImageState; if($imageState.ImageState -ne 'IMAGE_STATE_GENERALIZE_RESEAL_TO_OOBE') { Write-Output $imageState.ImageState; Start-Sleep -Seconds 10} else { break } }"
+            ]
+        }
+    ],
+    "post-processors": [
+        {
+          "type": "manifest",
+          "output": "manifest.json",
+          "strip_path": true
+        }
+        
+      ]
+}

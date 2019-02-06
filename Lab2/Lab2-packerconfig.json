@@ -1,0 +1,71 @@
+{
+    "variables":{
+        "azure_subscription_id": "",
+        "azure_client_id": "",
+        "azure_client_secret": "",
+        "azure_tenant_id": "",
+        "alias":""
+    },
+    "builders": [
+        {
+            "type": "azure-arm",
+            "subscription_id": "{{user `azure_subscription_id`}}",
+            "client_id": "{{user `azure_client_id`}}",
+            "client_secret": "{{user `azure_client_secret`}}",
+            "tenant_id": "{{user `azure_tenant_id`}}",
+            "location": "East US",
+            "os_type": "Linux",
+            "image_publisher": "RedHat",
+            "image_offer": "RHEL",
+            "image_sku": "7.3",
+            "virtual_network_name":"{{user `alias`}}-vnet1",
+            "virtual_network_subnet_name":"Management",
+            "virtual_network_resource_group_name":"{{user `alias`}}-network-rg",
+            "managed_image_resource_group_name": "{{user `alias`}}-vmimages-rg",
+            "managed_image_name": "{{user `alias`}}-rhel-image01"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "file",
+            "source": "./soelab2.sh",
+            "destination": "/tmp/"
+        },
+        {
+            "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "cd /tmp",
+                "sudo sh soelab2.sh"
+            ],
+            "inline_shebang": "/bin/sh -x",
+            "type": "shell"
+        },
+        {
+            "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+            ],
+            "inline_shebang": "/bin/sh -x",
+            "type": "shell"
+        }
+    ],
+    "post-processors": [
+        {
+          "type": "manifest",
+          "output": "manifest.json",
+          "strip_path": true
+        },
+        {
+            "type": "shell-local",
+            "environment_vars": ["imgname={{user `alias`}}-rhel-image01", "imggal={{user `alias`}}imagegallery","imggalrg={{user `alias`}}-vmimages-rg","imggaldef={{user `alias`}}-imagedef-linux"],
+            "tempfile_extension": ".cmd",
+            "inline": [
+                "echo %imgname%",  
+                "az sig image-version create -g %imggalrg% --gallery-name %imggal% --gallery-image-definition %imggaldef% --gallery-image-version 1.0.0 --target-regions westus=2 EastUS=1  --managed-image %imgname%"
+            ]
+
+
+        }
+        
+      ]
+}

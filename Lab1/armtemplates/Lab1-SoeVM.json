@@ -1,0 +1,81 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "alias": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your Microsoft Alias."
+      }
+    }
+  },
+  "variables": {
+    "vNet1": {
+      "name": "[Concat(parameters('alias'),'-vnet1')]",
+      "addressSpacePrefix": "10.10.0.0/16",
+      "subnet1Name": "AzureFirewallSubnet",
+      "subnet1Prefix": "10.10.1.0/24",
+      "subnet2Name": "DMZ",
+      "subnet2Prefix": "10.10.2.0/24",
+      "subnet3Name": "Management",
+      "subnet3Prefix": "10.10.3.0/24",
+      "gatewaySubnetPrefix": "10.10.4.0/27",
+      "gatewayName": "[concat(parameters('alias'),'-vnet1-GW')]",
+      "gatewayPublicIPName": "[concat(parameters('alias'),'-vnet1-GWIP')]",
+      "asn": 65031,
+      "location": "East US"
+    },
+    "vaultResourceGroupName": "[Concat(parameters('alias'),'-keyvault-rg')]",
+    "vaultname": "[Concat(parameters('alias'),'-akeyvault')]",
+    "jumpboxrg": "[concat(parameters('alias'),'-vmimages-rg')]",
+    "secretName": "adminpassword",
+    "adminusername": "[Concat(parameters('alias'),'-admin')]",
+    "lab1soevmrul": "https://msreadylabs.blob.core.windows.net/workshop/VM-Image.json"
+
+  },
+  "resources": [
+
+
+    {
+      "apiVersion": "2017-05-10",
+      "name": "nestedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "resourceGroup": "[variables('jumpboxrg')]",
+      "dependson": [
+      
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('lab1soevmrul')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "alias": {
+            "value": "[parameters('alias')]"
+          },
+          "adminusername": {
+            "value": "[variables('adminusername')]"
+          },
+          "adminpassword": {
+        
+              "reference": {
+                "keyVault": {
+                  "id": "[resourceId( variables('vaultResourceGroupName'), 'Microsoft.KeyVault/vaults', variables('vaultName'))]"
+                },
+                "secretName": "[variables('secretName')]"
+              }
+            
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "result": {
+      "value": "[concat('Created Vnet ---------->',variables('vNet1').name)]",
+      "type": "string"
+
+    }
+  }
+}
