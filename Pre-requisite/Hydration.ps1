@@ -4,7 +4,7 @@
 )
 
 
-$outputpath ="D:\azure\Ready19\hydrationoutput.txt"
+$outputpath =".\hydrationoutput.txt"
 
 Write-Host 'Please log into Azure now' -foregroundcolor Green;
 Login-AzureRmAccount
@@ -234,6 +234,12 @@ $function =@("keyvault","network","vmimages","jumpbox")
             
             Write-Host "Created a new Shared Image Gallery Definittion named $imagegaldefwin to store VM Images";
         }
+
+$scope2 = '/subscriptions/' + $azsubid
+New-AzureRmRoleAssignment  -ApplicationId $aadClientID -RoleDefinitionName Contributor -Scope $scope2
+
+
+
 
 
 New-AzureRmResourceGroupDeployment -Name "Vnet-Deployment" -ResourceGroupName $networkrg -TemplateUri 'https://msreadylabs.blob.core.windows.net/workshop/azuredeployCopy.json' -TemplateParameterObject @{"alias"=$alias}
