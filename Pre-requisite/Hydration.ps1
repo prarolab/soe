@@ -244,6 +244,10 @@ New-AzureRmRoleAssignment  -ApplicationId $aadClientID -RoleDefinitionName Contr
 
 New-AzureRmResourceGroupDeployment -Name "Vnet-Deployment" -ResourceGroupName $networkrg -TemplateUri 'https://msreadylabs.blob.core.windows.net/workshop/azuredeployCopy.json' -TemplateParameterObject @{"alias"=$alias}
 
+New-AzureRmResourceGroupDeployment -Name "devopsagent" -ResourceGroupName $networkrg -TemplateUri 'https://msreadylabs.blob.core.windows.net/workshop/azuredevopsagent.json' -TemplateParameterObject @{"alias"=$alias}
+
+
+
     if((Test-Path  $outputpath) -eq 'True' )
         {
             Clear-Content $outputpath
