@@ -27,15 +27,11 @@
     ],
     "provisioners": [
         {
-            "type": "file",
-            "source": "./soelab2.sh",
-            "destination": "/tmp/"
-        },
-        {
             "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "cd /tmp",
-                "sudo sh soelab2.sh"
+               	"cd /tmp",
+                "sudo wget https://msreadylabs.blob.core.windows.net/workshop/soelab2.sh",
+		"sudo sh soelab2.sh"
             ],
             "inline_shebang": "/bin/sh -x",
             "type": "shell"
@@ -58,16 +54,11 @@
         {
             "type": "shell-local",
             "environment_vars": ["imgname={{user `alias`}}-rhel-image01", "imggal={{user `alias`}}imagegallery","imggalrg={{user `alias`}}-vmimages-rg","imggaldef={{user `alias`}}-imagedef-linux","sub={{user `azure_subscription_id`}}","tenant={{user `azure_tenant_id`}}","secret={{user `azure_client_secret`}}","clientid={{user `azure_client_id`}}"],
-           
-
             "tempfile_extension": ".cmd",
             "inline": [
                 "echo %imgname%", 
-                "az login --service-principal -u %clientid% --subscription %sub% --tenant %tenant% --password %secret% ",
-                "az sig image-version create -g %imggalrg% --gallery-name %imggal% --gallery-image-definition %imggaldef% --gallery-image-version 1.0.0 --target-regions westus=2 EastUS=1  --managed-image %imgname%"
+                "az sig image-version create -g %imggalrg% --gallery-name %imggal% --gallery-image-definition %imggaldef% --gallery-image-version 1.0.0 --target-regions westus=2 EastUS=1 --managed-image %imgname%"
             ]
-
-
         }
         
       ]
