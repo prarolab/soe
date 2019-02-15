@@ -55,6 +55,8 @@ $function =@("keyvault","network","vmimages","jumpbox")
 
             }
 
+New-AzureRmResourceGroup -Name "managed-images" -Location $Location -Force | Out-Null
+
 # Check if AAD app with $aadAppName was already created
     $SvcPrincipals = (Get-AzureRmADServicePrincipal -SearchString $aadAppName);
     if(-not $SvcPrincipals)
